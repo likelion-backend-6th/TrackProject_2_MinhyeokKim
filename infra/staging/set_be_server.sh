@@ -17,7 +17,7 @@ docker pull $IMAGE_TAG
 docker run -p 8000:8000 -d \
     -v ~/.aws:/root/.aws:ro \
     --env-file .env \
-    --name lion-app \
+    --name sns-app \
     $IMAGE_TAG
 
 #4. check docker
