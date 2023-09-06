@@ -13,23 +13,24 @@ import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-c1-x3*p!l7@8i%fr^@l@ti0&16@n^+j6sc#p&nrs9!=kidflaj"
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+LOCAL_IP = os.getenv("LOCAL_IP", "")
+
 ALLOWED_HOSTS = [
+    "*",
     "127.0.0.1",
     "localhost",
+    LOCAL_IP,
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -62,6 +63,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "SNS.urls"
+
 
 TEMPLATES = [
     {
@@ -96,6 +98,7 @@ DATABASES = {
         "USER": os.getenv("POSTGRES_USER", "postgres"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
         "HOST": os.getenv("DB_HOST", "db"),
+        "PORT": os.getenv("DB_PORT", "5432"),
     }
 }
 
@@ -136,10 +139,30 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+STATIC_ROOT = "/var/www/html/static"
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    # Quick start for DRF
+    # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    # "PAGE_SIZE": 10,
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Your Project API",
+    "DESCRIPTION": "Your project description",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    # OTHER SETTINGS
+}
 
 ## NCP
 NCP_ACCESS_KEY = os.getenv("NCP_ACCESS_KEY", "")
