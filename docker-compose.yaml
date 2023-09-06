@@ -1,0 +1,37 @@
+# Local docker-compose
+# docker-compose 파일의 버전을 명시
+version: "3"
+
+services:
+  sns-app:
+    depends_on:
+      - db
+    container_name: sns-app
+    build:
+      context: app
+      dockerfile: Dockerfile # 사용할 도커 파일의 이름
+    image: sns-app:latest
+    ports:
+      - "8000:8000" # 앞쪽이 호스트 시스템의 포트 : 뒤쬑이 컨테이너의 포트
+    volumes:
+      - ./app:/app
+    command:
+      - "/start"
+    env_file:
+      - ./.envs/local/.django
+      - ./.envs/local/.postgres
+      - ./.envs/prod/.ncp
+
+  db:
+    container_name: sns-db
+    image: postgres:13
+    env_file:
+      - ./.envs/local/.postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+

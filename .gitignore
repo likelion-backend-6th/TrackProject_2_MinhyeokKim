@@ -1,6 +1,7 @@
 .vscode
 .idea
 .DS_Store
+.envs/prod
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
