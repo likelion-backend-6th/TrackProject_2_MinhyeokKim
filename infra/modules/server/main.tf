@@ -54,13 +54,13 @@ resource "ncloud_init_script" "main" {
 }
 
 resource "ncloud_network_interface" "main" {
-    name                  = "${var.name}-nic-${var.env}"
-    description           = "for ${var.name} server"
-    subnet_no             = var.subnet_be_server
-    access_control_groups = [
-        data.ncloud_vpc.main.default_access_control_group_no, # default ACG
-        ncloud_access_control_group.main.id, # created ACG
-    ]
+  name        = "${var.name}-nic-${var.env}"
+  description = "for ${var.name} server"
+  subnet_no   = var.subnet_be_server
+  access_control_groups = [
+    data.ncloud_vpc.main.default_access_control_group_no, # default ACG
+    ncloud_access_control_group.main.id,                  # created ACG
+  ]
 }
 
 resource "ncloud_server" "main" {
@@ -69,10 +69,10 @@ resource "ncloud_server" "main" {
   server_image_product_code = "SW.VSVR.OS.LNX64.UBNTU.SVR2004.B050"
   server_product_code       = var.server_product_code
   login_key_name            = ncloud_login_key.loginkey.key_name
-  init_script_no = ncloud_init_script.main.id
+  init_script_no            = ncloud_init_script.main.id
 
   network_interface {
     network_interface_no = ncloud_network_interface.main.id
-    order = 0
+    order                = 0
   }
 }

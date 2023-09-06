@@ -12,15 +12,15 @@ variable "support_vpc" {
 
 # NCP setup
 variable "NCP_ACCESS_KEY" {
-  type = string
+  type      = string
   sensitive = true
 }
 variable "NCP_SECRET_KEY" {
-  type = string
+  type      = string
   sensitive = true
 }
 
 # env
 variable "env" {
-  type = string  
+  type = string
 }

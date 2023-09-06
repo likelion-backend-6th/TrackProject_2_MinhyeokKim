@@ -19,11 +19,11 @@ variable "password" {
 
 # NCP setup
 variable "NCP_ACCESS_KEY" {
-  type = string
+  type      = string
   sensitive = true
 }
 variable "NCP_SECRET_KEY" {
-  type = string
+  type      = string
   sensitive = true
 }
 variable "NCP_CONTAINER_REGISTRY" {
@@ -35,28 +35,28 @@ variable "IMAGE_TAG" {
 
 # DB setup
 variable "db" {
-    type = string
-    sensitive = true
+  type      = string
+  sensitive = true
 }
 variable "db_user" {
-  type = string
+  type      = string
   sensitive = true
 }
 variable "db_password" {
-  type = string
+  type      = string
   sensitive = true
 }
 variable "db_port" {
-  type = string
+  type      = string
   sensitive = true
 }
 
 # Django setup
 variable "DJANGO_SETTINGS_MODULE" {
-  type = string
+  type      = string
   sensitive = true
 }
 variable "DJANGO_SECRET_KEY" {
-  type = string
+  type      = string
   sensitive = true
 }
