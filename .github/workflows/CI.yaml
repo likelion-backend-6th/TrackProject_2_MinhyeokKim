@@ -1,0 +1,72 @@
+name: CI
+
+on:
+    pull_request:
+    push:
+        branches:
+            -   "main"
+
+env:
+    IMAGE: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app
+    IMAGE_TAG: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app:latest
+
+jobs:
+    lint:
+        name: Check lint (black)
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout code
+                uses: actions/checkout@v3
+
+            -   uses: actions/setup-python@v4
+                with:
+                  python-version: '3.11' 
+
+            -   name: Install black
+                run: pip install black
+
+            -   name: Check black
+                run: black --check SNS
+
+    build_push_to_ncp:
+        needs: lint
+        name: Build Image
+        runs-on: ubuntu-latest
+        steps:
+            # checkout to the branch and get the codes
+            -   name: Checkout code
+                uses: actions/checkout@v3
+
+            -   name: test
+                run: |
+                    docker-compose -f docker-compose.test.yml up --build -d
+                    docker-compose -f docker-compose.test.yml run sns-app python manage.py test
+
+            -   name: post-test
+                run: |
+                    docker-compose -f docker-compose.test.yml down
+
+            # buildx - support amd64, arm64
+            -   name: Set up Docker buildx
+                uses: docker/setup-buildx-action@v2
+            
+            # NCP Login
+            -   name: Login to NCR
+                uses: docker/login-action@v2
+                with:
+                    # registry: where to login
+                    registry: ${{ vars.NCP_CONTAINER_REGISTRY }}
+                    username: ${{ secrets.NCP_ACCESS_KEY }}
+                    password: ${{ secrets.NCP_SECRET_KEY }}
+            
+            -   name: Get current timestamp
+                id: timestamp
+                run: echo "timestamp=$(date '+%s')" >> "$GITHUB_OUTPUT"
+
+            -   name: Build and Push
+                uses: docker/build-push-action@v4
+                with:
+                    context: app # location where image will be built
+                    push: false # This indicates push event
+                    tags: ${{ env.IMAGE_TAG }},"${{ env.IMAGE }}:${{ steps.timestamp.outputs.timestamp }}"
+                    platforms: linux/amd64,linux/arm64
