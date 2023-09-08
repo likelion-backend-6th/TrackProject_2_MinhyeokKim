@@ -20,6 +20,9 @@ class Post(models.Model):
 # Followers can see the posts of the people they follow
 # User information has followers and following
 class Follow(models.Model):
+    class Meta:
+        unique_together = ("follower", "following")
+
     follower = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="follower"
     )
