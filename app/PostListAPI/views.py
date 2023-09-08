@@ -56,7 +56,6 @@ class FollowViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["GET"])
     def follows(self, request, pk=None):
-        print("pk value: ", pk)
         user = User.objects.get(pk=pk)
 
         followers = Follow.objects.filter(following=user)
@@ -64,13 +63,28 @@ class FollowViewSet(viewsets.ModelViewSet):
         follower_serializer = FollowSerializer(followers, many=True)
         following_serializer = FollowSerializer(followings, many=True)
 
-        print("follower_serializer.data : ", follower_serializer.data)
-        print("following_serializer.data : ", following_serializer.data)
-
         return Response(
             {
                 "current user": user.username,
                 "follower": follower_serializer.data,
                 "following": following_serializer.data,
             }
+        )
+
+    @action(detail=False, methods=["POST"])
+    def add_follow(self, request):
+        follower = request.user
+        following_id = request.data.get("following_id")
+        following = User.objects.get(pk=following_id)
+
+        if Follow.objects.filter(follower=follower, following=following).exists():
+            return Response(
+                status=status.HTTP_409_CONFLICT,
+                data="Already following",
+            )
+        result = f"${follower} follows ${following}"
+        Follow.objects.create(follower=follower, following=following)
+        return Response(
+            status=status.HTTP_201_CREATED,
+            data=result,
         )
