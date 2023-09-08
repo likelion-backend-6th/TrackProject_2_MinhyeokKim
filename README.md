@@ -39,11 +39,10 @@ docker-compose up --build -d
 ### 4. 테스트 코드 작성
 
 - [ ] 전체 사용자 목록에서 자신을 제외한 목록이 잘 나오는지 테스트
-- [ ] 모든 게시물이 출력되는지 테스트
+- [x] 모든 게시물이 출력되는지 테스트
 - [ ] 본인의 게시물만 수정, 삭제가 가능한지 테스트
 - [ ] follow / unfollow 기능이 잘 작동하는지 테스트
 - [ ] follow한 사람들이 올린 게시물을 잘 확인할 수 있는지 테스트
-- [ ] 기타 테스트가 필요한 내용 테스트
 
 ### 5. 배포
 
@@ -65,7 +64,8 @@ docker-compose up --build -d
 
 ### 로드밸런서를 통해 배포
 
-- [x] 인스턴스에 직접 접근하는 대신 로드밸런서를 통해 API를 호출할 수 있도록 배포 >> http://sns-lb-staging-19447035-3f19227be0e5.kr.lb.naverncp.com/sns/post/
+- [x] 인스턴스에 직접 접근하는 대신 로드밸런서를 통해 API를 호출할 수 있도록 배포
+  > http://sns-lb-staging-19447035-3f19227be0e5.kr.lb.naverncp.com/sns/post/
 
 ### CICD Pipeline 작성
 
