@@ -88,3 +88,22 @@ class FollowViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
             data=result,
         )
+
+    @action(detail=False, methods=["DELETE"])
+    def remove_follow(self, request, pk=None):
+        follower = request.user
+        following_id = request.query_params.get("following_id")
+        following = User.objects.get(pk=following_id)
+
+        if Follow.objects.filter(follower=follower, following=following).exists():
+            result = f"{follower} unfollows {following}"
+            Follow.objects.filter(follower=follower, following=following).delete()
+            return Response(
+                status=status.HTTP_200_OK,
+                data=result,
+            )
+
+        return Response(
+            status=status.HTTP_404_NOT_FOUND,
+            data="Follow not found",
+        )
