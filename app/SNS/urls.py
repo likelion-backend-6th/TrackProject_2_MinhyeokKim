@@ -9,7 +9,7 @@ from PostListAPI.urls import router as post_list_api_router
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("post/", include(post_list_api_router.urls)),
+    path("sns/", include(post_list_api_router.urls)),
     path("api-auth/", include("rest_framework.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
     path(
