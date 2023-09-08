@@ -1,43 +1,41 @@
 name: CD using Docker Image
 
-
 on:
-    workflow_dispatch:
-    pull_request:
-        branches:
-            -   main
-        paths:
-            -   .github/workflows/CD.yaml
-            -   SNS/**
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/CD.yaml
+      - SNS/**
 
 env:
-    IMAGE: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app
-    IMAGE_TAG: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app:latest
-
+  IMAGE: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app
+  IMAGE_TAG: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app:latest
 
 jobs:
-    deploy-staging:
-        name: deploy to staging
-        runs-on: ubuntu-latest
-        steps:
-            -   name: git pull via SSH
-                uses: appleboy/ssh-action@v1.0.0
-                with:
-                    host: ${{ secrets.STAGING_HOST }}
-                    username: ${{ secrets.USERNAME }}
-                    password: ${{ secrets.PASSWORD }}
-                    script: | # while actions is running, please use options !
-                        cd sns_app
-                        echo "${{ secrets.NCP_SECRET_KEY }}" | dockers login ${{ vars.NCP_CONTAINER_REGISTRY }} \
-                        --username ${{ secrets.NCP_ACCESS_KEY }} \
-                        --password ${{ secrets.NCP_SECRET_KEY }}
-                        docker pull ${{ env.IMAGE_TAG }}
-                        docker stop sns-app && docker rm sns-app
-                        docker run -p 8000:8000 -d \
-                        --env-file .env \
-                        --name sns-app \
-                        ${{ env.IMAGE_TAG }} \
-                        /start
+  deploy-staging:
+    name: deploy to staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: git pull via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          script: | # while actions is running, please use options !
+            cd sns_app
+            echo "${{ secrets.NCP_SECRET_KEY }}" | dockers login ${{ vars.NCP_CONTAINER_REGISTRY }} \
+            --username ${{ secrets.NCP_ACCESS_KEY }} \
+            --password ${{ secrets.NCP_SECRET_KEY }}
+            docker pull ${{ env.IMAGE_TAG }}
+            docker stop sns-app && docker rm sns-app
+            docker run -p 8000:8000 -d \
+            --env-file .env \
+            --name sns-app \
+            ${{ env.IMAGE_TAG }} \
+            /start
 
-            -   name: echo IMAGE_TAG
-                run: echo $IMAGE_TAG
+      - name: echo IMAGE_TAG
+        run: echo $IMAGE_TAG
