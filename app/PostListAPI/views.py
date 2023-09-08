@@ -82,7 +82,7 @@ class FollowViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_409_CONFLICT,
                 data="Already following",
             )
-        result = f"${follower} follows ${following}"
+        result = f"{follower} follows {following}"
         Follow.objects.create(follower=follower, following=following)
         return Response(
             status=status.HTTP_201_CREATED,
