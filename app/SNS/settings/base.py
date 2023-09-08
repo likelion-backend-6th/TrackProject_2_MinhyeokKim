@@ -50,6 +50,7 @@ INSTALLED_APPS += [
 # Third Party App
 INSTALLED_APPS += [
     "rest_framework",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
