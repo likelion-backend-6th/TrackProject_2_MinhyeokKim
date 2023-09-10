@@ -38,10 +38,10 @@ class PostViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=["GET"],
-        url_name="following_post",
-        url_path="following_post",
+        url_name="following_posts",
+        url_path="following_posts",
     )
-    def following_post(self, request):
+    def following_posts(self, request):
         following_users = Follow.objects.filter(follower=request.user).values_list(
             "following", flat=True
         )

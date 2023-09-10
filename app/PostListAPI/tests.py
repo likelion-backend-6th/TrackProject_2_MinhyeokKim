@@ -158,3 +158,25 @@ class PostFollowTestCase(APITestCase):
                 follower=random_user, following__id=random_user_to_unfollow
             ).exists()
         )
+
+    def test_get_following_posts(self):
+        users_with_follows = set()  # delete duplication
+        for follow_instance in Follow.objects.all():
+            users_with_follows.add(follow_instance.follower)
+
+        users_with_follows = list(users_with_follows)
+        random_user = choice(users_with_follows)
+
+        self.client.force_authenticate(user=random_user)
+
+        url = reverse("post-following_posts")
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        following_users_ids = Follow.objects.filter(follower=random_user).values_list(
+            "following", flat=True
+        )
+
+        for post_instance in response.data:
+            self.assertIn(post_instance["author"], following_users_ids)
