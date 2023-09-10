@@ -11,6 +11,12 @@ cd sns_app
 docker-compose up --build -d
 ```
 
+Dummy data creation at first
+```bash
+python manage.py create_dummy_data
+```
+
+
 ### 1. 백엔드 DB 설계
 
 - [x] Post
