@@ -52,7 +52,6 @@ INSTALLED_APPS += [
     "rest_framework",
     "drf_spectacular",
     "django_seed",
-    # "create_dummy_data",
 ]
 
 MIDDLEWARE = [

@@ -1,11 +1,7 @@
-import random
-
 from django.core.management import BaseCommand
 from django.contrib.auth.models import User
-from django_seed import Seed
 from PostListAPI.models import Post, Follow
-
-# fake = Faker()
+from django_seed import Seed
 
 
 class Command(BaseCommand):
@@ -19,9 +15,9 @@ class Command(BaseCommand):
             User,
             5,
             {
-                "username": lambda x: seeder.faker.user_name(),
-                "email": lambda x: seeder.faker.email(),
-                "password": lambda x: "1234",
+                "username": seeder.faker.user_name(),
+                "email": seeder.faker.email(),
+                "password": "1234",
             },
         )
         created_users = seeder.execute()
@@ -34,8 +30,8 @@ class Command(BaseCommand):
                 Post,
                 3,
                 {
-                    "title": lambda x: seeder.faker.sentence(nb_words=5),
-                    "content": lambda x: seeder.faker.text(max_nb_chars=20),
+                    "title": seeder.faker.sentence(nb_words=5),
+                    "content": seeder.faker.text(max_nb_chars=20),
                     "author": user,
                 },
             )
