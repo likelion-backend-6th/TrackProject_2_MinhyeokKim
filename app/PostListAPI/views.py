@@ -29,13 +29,18 @@ class PostViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(detail=False, methods=["GET"])
+    @action(detail=False, methods=["GET"], url_name="my_posts", url_path="my_posts")
     def my_posts(self, request):
         my_posts = Post.objects.filter(author=request.user)
         serializer = PostSerializer(my_posts, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=["GET"])
+    @action(
+        detail=False,
+        methods=["GET"],
+        url_name="following_post",
+        url_path="following_post",
+    )
     def following_post(self, request):
         following_users = Follow.objects.filter(follower=request.user).values_list(
             "following", flat=True
@@ -77,7 +82,7 @@ class FollowViewSet(viewsets.ModelViewSet):
     serializer_class = FollowSerializer
     permission_classes = [permissions.AllowAny]
 
-    @action(detail=True, methods=["GET"])
+    @action(detail=True, methods=["GET"], url_name="follows", url_path="follows")
     def follows(self, request, pk=None):
         user = User.objects.get(pk=pk)
 
@@ -94,7 +99,9 @@ class FollowViewSet(viewsets.ModelViewSet):
             }
         )
 
-    @action(detail=False, methods=["POST"])
+    @action(
+        detail=False, methods=["POST"], url_name="add_follow", url_path="add_follow"
+    )
     def add_follow(self, request):
         follower = request.user
         following_id = request.data.get("following_id")
@@ -112,11 +119,27 @@ class FollowViewSet(viewsets.ModelViewSet):
             data=result,
         )
 
-    @action(detail=False, methods=["DELETE"])
-    def remove_follow(self, request, pk=None):
+    @action(
+        detail=False,
+        methods=["DELETE"],
+        url_name="unfollow",
+        url_path="unfollow/(?P<following_id>[^/.]+)",
+    )
+    def unfollow(self, request, pk=None, following_id=None):
         follower = request.user
-        following_id = request.query_params.get("following_id")
-        following = User.objects.get(pk=following_id)
+
+        if following_id is None:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data="Missing following_id",
+            )
+
+        try:
+            following = User.objects.get(pk=following_id)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         if Follow.objects.filter(follower=follower, following=following).exists():
             result = f"{follower} unfollows {following}"
