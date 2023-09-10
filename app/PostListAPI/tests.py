@@ -39,3 +39,14 @@ class PostFollowTestCase(APITestCase):
         self.client.force_authenticate(user=user)
         response = self.client.get(reverse("post-list"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_all_users_except_itself(self):
+        random_user = User.objects.order_by("?").first()
+        self.client.force_authenticate(user=random_user)
+        response = self.client.get(reverse("user-all_users"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        returned_user_ids = [user["id"] for user in response.data]
+
+        self.assertNotIn(random_user.id, returned_user_ids)
