@@ -13,7 +13,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
 
-    @action(detail=False, methods=["GET"], url_path="all_users", url_name="all_users")
+    @action(detail=False, methods=["GET"])
     def all_users(self, request):
         users = User.objects.exclude(id=request.user.id).order_by("id")
         serializer = UserSerializer(users, many=True)
