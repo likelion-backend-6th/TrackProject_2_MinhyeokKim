@@ -35,6 +35,15 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer = PostSerializer(my_posts, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=["GET"])
+    def following_post(self, request):
+        following_users = Follow.objects.filter(follower=request.user).values_list(
+            "following", flat=True
+        )
+        following_posts = Post.objects.filter(author__in=following_users).order_by("id")
+        serializer = PostSerializer(following_posts, many=True)
+        return Response(serializer.data)
+
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)
         instance = self.get_object()
