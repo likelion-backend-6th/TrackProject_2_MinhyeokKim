@@ -4,7 +4,20 @@ from rest_framework import viewsets, status, permissions
 
 from PostListAPI.models import Post, Follow
 from django.contrib.auth.models import User
-from PostListAPI.serializers import PostSerializer, FollowSerializer
+from PostListAPI.serializers import PostSerializer, FollowSerializer, UserSerializer
+
+
+# User R
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]
+
+    @action(detail=False, methods=["GET"])
+    def all_users(self, request):
+        users = User.objects.exclude(id=request.user.id).order_by("id")
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
 
 
 # Post CRUD
