@@ -1,11 +1,10 @@
 name: CI
 
 on:
-  workflow_dispatch:
-  # pull_request:
-  # push:
-  #   branches:
-  #     - "main"
+  pull_request:
+  push:
+    branches:
+      - "main"
 
 env:
   IMAGE: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app
@@ -71,3 +70,30 @@ jobs:
           push: true # This indicates push event
           tags: ${{ env.IMAGE_TAG }},"${{ env.IMAGE }}:${{ steps.timestamp.outputs.timestamp }}"
           platforms: linux/amd64,linux/arm64
+
+  deploy-staging:
+    needs: build_push_to_ncp
+    name: deploy to staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: git pull via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          script: | # while actions is running, please use options !
+            cd sns_app
+            echo "${{ secrets.NCP_SECRET_KEY }}" | dockers login ${{ vars.NCP_CONTAINER_REGISTRY }} \
+            --username ${{ secrets.NCP_ACCESS_KEY }} \
+            --password ${{ secrets.NCP_SECRET_KEY }}
+            docker pull ${{ env.IMAGE_TAG }}
+            docker stop sns-app && docker rm sns-app
+            docker run -p 8000:8000 -d \
+            --env-file .env \
+            --name sns-app \
+            ${{ env.IMAGE_TAG }} \
+            /start
+
+      - name: echo IMAGE_TAG
+        run: echo $IMAGE_TAG

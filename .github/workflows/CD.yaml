@@ -2,12 +2,12 @@ name: CD using Docker Image
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - .github/workflows/CD.yaml
-      - SNS/**
+  # pull_request:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - .github/workflows/CD.yaml
+  #     - SNS/**
 
 env:
   IMAGE: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app
