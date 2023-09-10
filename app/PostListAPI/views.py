@@ -1,6 +1,7 @@
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import viewsets, status, permissions
+from rest_framework.exceptions import NotFound
 
 from PostListAPI.models import Post, Follow
 from django.contrib.auth.models import User
@@ -13,8 +14,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
 
-    @action(detail=False, methods=["GET"], url_path="all_users", url_name="all_users")
-    def all_users(self, request):
+    def list(self, request):
         users = User.objects.exclude(id=request.user.id).order_by("id")
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
@@ -26,12 +26,34 @@ class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
 
+    def check_authentication(self):
+        if not self.request.user.is_authenticated:
+            return Response(
+                status=status.HTTP_401_UNAUTHORIZED,
+                data="You are not allowed to perform this action",
+            )
+
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        if self.request.user.is_authenticated:
+            serializer.save(author=self.request.user)
+        else:
+            return Response(
+                status=status.HTTP_401_UNAUTHORIZED,
+                data="You are not allowed to create a post",
+            )
 
     @action(detail=False, methods=["GET"], url_name="my_posts", url_path="my_posts")
     def my_posts(self, request):
+        self.check_authentication()
+
         my_posts = Post.objects.filter(author=request.user)
+
+        if not my_posts:
+            return Response(
+                status=status.HTTP_204_NO_CONTENT,
+                data="You have no posts",
+            )
+
         serializer = PostSerializer(my_posts, many=True)
         return Response(serializer.data)
 
@@ -42,18 +64,32 @@ class PostViewSet(viewsets.ModelViewSet):
         url_path="following_posts",
     )
     def following_posts(self, request):
+        self.check_authentication()
+
         following_users = Follow.objects.filter(follower=request.user).values_list(
             "following", flat=True
         )
+
+        if not following_users:
+            return Response(
+                status=status.HTTP_204_NO_CONTENT,
+                data="No following posts found",
+            )
+
         following_posts = Post.objects.filter(author__in=following_users).order_by("id")
         serializer = PostSerializer(following_posts, many=True)
         return Response(serializer.data)
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)
-        instance = self.get_object()
 
-        print("self", vars(self))
+        try:
+            instance = self.get_object()
+        except NotFound:
+            return Response(
+                status=status.HTTP_404_NOT_FOUND,
+                data="Post not found",
+            )
 
         if instance.author != self.request.user:
             return Response(
@@ -66,14 +102,21 @@ class PostViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
+        try:
+            instance = self.get_object()
+        except NotFound:
+            return Response(
+                status=status.HTTP_404_NOT_FOUND,
+                data="Post not found",
+            )
+
         if instance.author != self.request.user:
             return Response(
                 data="You are not allowed to delete this post",
                 status=status.HTTP_403_FORBIDDEN,
             )
         self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT, data="Post deleted")
 
 
 # Follow CRUD

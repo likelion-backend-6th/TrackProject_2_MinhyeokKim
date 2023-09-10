@@ -47,7 +47,7 @@ class PostFollowTestCase(APITestCase):
     def test_get_all_users_except_itself(self):
         random_user = User.objects.order_by("?").first()
         self.client.force_authenticate(user=random_user)
-        response = self.client.get(reverse("user-all_users"))
+        response = self.client.get(reverse("user-list"))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -62,12 +62,14 @@ class PostFollowTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_update_own_post(self):
-        random_user = User.objects.order_by("?").first()
+        users_with_posts = User.objects.filter(post__isnull=False).distinct()
+
+        if not users_with_posts.exists():
+            self.fail("No users with posts")
+
+        random_user = users_with_posts.order_by("?").first()
         self.client.force_authenticate(user=random_user)
         random_post = Post.objects.filter(author=random_user).order_by("?").first()
-
-        if random_post is None:
-            self.fail("No post found")
 
         url = reverse("post-detail", kwargs={"pk": random_post.id})
 
@@ -83,25 +85,26 @@ class PostFollowTestCase(APITestCase):
         self.assertEqual(response.data["content"], "Updated Content")
 
     def test_delete_own_post(self):
-        random_user = User.objects.order_by("?").first()
+        users_with_posts = User.objects.filter(post__isnull=False).distinct()
+
+        if not users_with_posts.exists():
+            self.fail("No users with posts")
+
+        random_user = users_with_posts.order_by("?").first()
         self.client.force_authenticate(user=random_user)
 
         random_post = Post.objects.filter(author=random_user).order_by("?").first()
 
-        if random_post is None:
-            self.fail("No post found")
-
         url = reverse("post-detail", kwargs={"pk": random_post.id})
-
         response = self.client.delete(url)
-
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Post.objects.filter(id=random_post.id).exists())
 
     def test_add_follow(self):
         random_user = User.objects.order_by("?").first()
         self.client.force_authenticate(user=random_user)
 
-        all_users_response = self.client.get(reverse("user-all_users"))
+        all_users_response = self.client.get(reverse("user-list"))
         all_users = all_users_response.data
 
         followed_users = Follow.objects.filter(follower=random_user).values_list(
