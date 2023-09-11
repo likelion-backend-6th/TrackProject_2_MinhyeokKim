@@ -12,10 +12,10 @@ docker-compose up --build -d
 ```
 
 Dummy data creation at first
+
 ```bash
 python manage.py create_dummy_data
 ```
-
 
 ### 1. 백엔드 DB 설계
 
@@ -76,3 +76,17 @@ python manage.py create_dummy_data
 ### CICD Pipeline 작성
 
 - [x] PR이 있을 때, 테스트 코드를 실행하여, 테스트가 정상 작동하는지 확인
+
+### 주요 설치 패키지/모듈
+
+|          이름           |  버전  |
+| :---------------------: | :----: |
+|       **python**        | 3.11.4 |
+|       **Django**        | 4.2.5  |
+|     **PostgreSQL**      |   13   |
+|  **PostgreSQL local**   |   15   |
+|      **gunicorn**       | 21.2.0 |
+|   **psycopg2-binary**   | 2.9.7  |
+| **djangorestframework** | 3.14.0 |
+|     **django-seed**     | 0.3.1  |
+|   **drf-spectacular**   | 0.26.4 |
