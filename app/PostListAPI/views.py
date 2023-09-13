@@ -24,99 +24,27 @@ class UserViewSet(viewsets.ModelViewSet):
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.AllowAny]
 
-    def check_authentication(self):
-        if not self.request.user.is_authenticated:
-            return Response(
-                status=status.HTTP_401_UNAUTHORIZED,
-                data="You are not allowed to perform this action",
-            )
+    def check_authentication(self, request):
+        if request.user != self.get_object().user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
-    def perform_create(self, serializer):
-        if self.request.user.is_authenticated:
-            serializer.save(author=self.request.user)
-        else:
-            return Response(
-                status=status.HTTP_401_UNAUTHORIZED,
-                data="You are not allowed to create a post",
-            )
-
-    @action(detail=False, methods=["GET"], url_name="my_posts", url_path="my_posts")
-    def my_posts(self, request):
-        self.check_authentication()
-
-        my_posts = Post.objects.filter(author=request.user)
-
-        if not my_posts:
-            return Response(
-                status=status.HTTP_204_NO_CONTENT,
-                data="You have no posts",
-            )
-
-        serializer = PostSerializer(my_posts, many=True)
-        return Response(serializer.data)
-
-    @action(
-        detail=False,
-        methods=["GET"],
-        url_name="following_posts",
-        url_path="following_posts",
-    )
-    def following_posts(self, request):
-        self.check_authentication()
-
-        following_users = Follow.objects.filter(follower=request.user).values_list(
-            "following", flat=True
-        )
-
-        if not following_users:
-            return Response(
-                status=status.HTTP_204_NO_CONTENT,
-                data="No following posts found",
-            )
-
-        following_posts = Post.objects.filter(author__in=following_users).order_by("id")
-        serializer = PostSerializer(following_posts, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        if self.action == "list":
+            return Post.objects.filter(user=self.request.user)
+        return super().get_queryset()
 
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop("partial", False)
+        self.check_authentication(request)
+        return super().update(request, *args, **kwargs)
 
-        try:
-            instance = self.get_object()
-        except NotFound:
-            return Response(
-                status=status.HTTP_404_NOT_FOUND,
-                data="Post not found",
-            )
-
-        if instance.author != self.request.user:
-            return Response(
-                status=status.HTTP_403_FORBIDDEN,
-                data="You are not allowed to update this post",
-            )
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
+    def partial_update(self, request, *args, **kwargs):
+        self.check_authentication(request)
+        return super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-        except NotFound:
-            return Response(
-                status=status.HTTP_404_NOT_FOUND,
-                data="Post not found",
-            )
-
-        if instance.author != self.request.user:
-            return Response(
-                data="You are not allowed to delete this post",
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT, data="Post deleted")
+        self.check_authentication(request)
+        return super().destroy(request, *args, **kwargs)
 
 
 # Follow CRUD
