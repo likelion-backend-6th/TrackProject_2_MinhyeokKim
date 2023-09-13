@@ -26,19 +26,18 @@ class Command(BaseCommand):
         # Seed posts
         for user in user_data:
             for i in range(3):
-                title = fake.sentence(nb_words=5)
                 content = fake.text(max_nb_chars=20)
-                Post.objects.create(title=title, content=content, author=user)
+                Post.objects.create(content=content, user=user)
 
         # Seed follows
         for user in user_data:
-            followers = []
+            followings = []
             for other_user in user_data:
                 if other_user != user:
-                    followers.append(other_user)
+                    followings.append(other_user)
 
-            selected_followers = sample(followers, 2)
-            for follower in selected_followers:
-                Follow.objects.create(follower=user, following=follower)
+            selected_followings = sample(followings, 2)
+            for following in selected_followings:
+                Follow.objects.create(follower=user, following=following)
 
         self.stdout.write(self.style.SUCCESS("Data seeded successfully"))
