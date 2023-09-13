@@ -1,58 +1,34 @@
-from rest_framework import status
-from rest_framework.test import APITestCase, APIRequestFactory
-
-from PostListAPI.models import Post, Follow
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.http import HttpResponse
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+from PostListAPI.models import Post, Follow
 from random import choice
 
 
 class PostFollowTestCase(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.factory = APIRequestFactory()
-        cls.superuser = User.objects.create_superuser(
-            username="superuser",
-            email=None,
-            password=None,
-        )
-        for i in range(5):
-            user = User.objects.create_user(
-                username=f"testuser {i+1}",
-                email=None,
-                password=None,
-            )
+        for i in range(3):
+            user = User.objects.create_user(username=f"user{i}")
+            setattr(cls, f"user{i}", user)
             for j in range(3):
-                Post.objects.create(
-                    author=user,
-                    title=f"Test Post {j} by User {i}",
-                    content=f"Content of Post {j} by User {i}",
+                post = Post.objects.create(
+                    user=user,
+                    content=f"{user}'s Content{j}",
                 )
-        users = User.objects.all()
-        for user in users:
-            print(user.username)
-
-        for i in range(len(users) - 1):
-            follower = users[i]
-            following = users[i + 1]
-            Follow.objects.create(follower=follower, following=following)
-
-        follows = Follow.objects.all()
-        for follow in follows:
-            print(
-                f"{follow.follower.username} is following {follow.following.username}"
-            )
+                setattr(cls, f"{user}_post{j}", post)
 
     def test_get_all_users_except_itself(self):
+        # login a random use
         random_user = User.objects.order_by("?").first()
         self.client.force_authenticate(user=random_user)
+        # get all users except itself
         response = self.client.get(reverse("user-list"))
-
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
+        # check if the user is in the response
         returned_user_ids = [user["id"] for user in response.data]
-
         self.assertNotIn(random_user.id, returned_user_ids)
 
     def test_get_all_posts(self):
@@ -60,126 +36,94 @@ class PostFollowTestCase(APITestCase):
         self.client.force_authenticate(user=random_user)
         response = self.client.get(reverse("post-list"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 9)
+
+    def test_get_mine_posts(self):
+        random_user = User.objects.order_by("?").first()
+        self.client.force_authenticate(user=random_user)
+        url = reverse("post-list")
+        response = self.client.get(f"{url}?mine=true")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 3)
+
+        for post in response.data:
+            self.assertEqual(post["user"], random_user.id)
 
     def test_update_own_post(self):
         users_with_posts = User.objects.filter(post__isnull=False).distinct()
 
         if not users_with_posts.exists():
-            self.fail("No users with posts")
+            self.fail("No users with posts: setup data error")
 
         random_user = users_with_posts.order_by("?").first()
+
         self.client.force_authenticate(user=random_user)
-        random_post = Post.objects.filter(author=random_user).order_by("?").first()
+        random_post = Post.objects.filter(user=random_user).order_by("?").first()
 
         url = reverse("post-detail", kwargs={"pk": random_post.id})
 
         update_data = {
-            "title": "Updated Title",
             "content": "Updated Content",
         }
 
-        response = self.client.put(url, data=update_data)
-
+        response = self.client.patch(url, data=update_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["title"], "Updated Title")
         self.assertEqual(response.data["content"], "Updated Content")
+
+        # if a stranger tries to update the post, it should fail
+        stranger = users_with_posts.exclude(id=random_user.id).order_by("?").first()
+        self.client.force_authenticate(user=stranger)
+        response = self.client.patch(url, data=update_data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_delete_own_post(self):
         users_with_posts = User.objects.filter(post__isnull=False).distinct()
 
         if not users_with_posts.exists():
-            self.fail("No users with posts")
+            self.fail("No users with posts: setup data error")
 
         random_user = users_with_posts.order_by("?").first()
-        self.client.force_authenticate(user=random_user)
-
-        random_post = Post.objects.filter(author=random_user).order_by("?").first()
-
+        stranger = users_with_posts.exclude(id=random_user.id).order_by("?").first()
+        random_post = Post.objects.filter(user=random_user).order_by("?").first()
         url = reverse("post-detail", kwargs={"pk": random_post.id})
-        response = self.client.delete(url)
+
+        # if stranger tries to delete the post, it should fail
+        self.client.force_authenticate(user=stranger)
+        response = self.client.delete(url)  # create request based on above data
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # if the user tries to delete the post, it should succeed
+        self.client.force_authenticate(user=random_user)
+        response = self.client.delete(url)  # create request based on above data
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Post.objects.filter(id=random_post.id).exists())
 
-    def test_add_follow(self):
+    def test_follow_unfollow(self):
         random_user = User.objects.order_by("?").first()
+        stranger = User.objects.exclude(id=random_user.id).order_by("?").first()
         self.client.force_authenticate(user=random_user)
+        url = reverse("follow")
 
-        all_users_response = self.client.get(reverse("user-list"))
-        all_users = all_users_response.data
-
-        followed_users = Follow.objects.filter(follower=random_user).values_list(
-            "following", flat=True
-        )
-
-        non_followed_users = []
-        for user in all_users:
-            if user["id"] not in followed_users and user["id"] != random_user.id:
-                non_followed_users.append(user)
-
-        random_user_to_follow = choice(non_followed_users)
-
-        url = reverse("follow-add_follow")
-        data = {"following_id": random_user_to_follow["id"]}
-
-        response = self.client.post(url, data=data)
-
+        response = self.client.post(url, {"following": stranger.id})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(
-            Follow.objects.filter(
-                follower=random_user, following__id=random_user_to_follow["id"]
-            ).exists()
+            Follow.objects.filter(follower=random_user, following=stranger).exists()
         )
 
-    def test_unfollow(self):
-        users_with_follows = set()  # delete duplication
-        for follow_instance in Follow.objects.all():
-            users_with_follows.add(follow_instance.follower)
-
-        users_with_follows = list(users_with_follows)
-
-        random_user = choice(users_with_follows)
-        self.client.force_authenticate(user=random_user)
-
-        followed_users = Follow.objects.filter(follower=random_user).values_list(
-            "following", flat=True
-        )
-
-        try:
-            random_user_to_unfollow = choice(followed_users)
-        except IndexError:
-            self.fail("No users to unfollow")
-
-        url = reverse(
-            "follow-unfollow", kwargs={"following_id": random_user_to_unfollow}
-        )
-
-        response = self.client.delete(url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # unfollow
+        response = self.client.delete(url, {"following": stranger.id})
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(
-            Follow.objects.filter(
-                follower=random_user, following__id=random_user_to_unfollow
-            ).exists()
+            Follow.objects.filter(follower=random_user, following=stranger).exists()
         )
 
     def test_get_following_posts(self):
-        users_with_follows = set()  # delete duplication
-        for follow_instance in Follow.objects.all():
-            users_with_follows.add(follow_instance.follower)
-
-        users_with_follows = list(users_with_follows)
-        random_user = choice(users_with_follows)
+        random_user = User.objects.order_by("?").first()
+        folloing_user = User.objects.exclude(id=random_user.id).order_by("?").first()
+        Follow.objects.create(follower=random_user, following=folloing_user)
 
         self.client.force_authenticate(user=random_user)
-
-        url = reverse("post-following_posts")
+        url = reverse("feed")
         response = self.client.get(url)
-
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        following_users_ids = Follow.objects.filter(follower=random_user).values_list(
-            "following", flat=True
-        )
-
-        for post_instance in response.data:
-            self.assertIn(post_instance["author"], following_users_ids)
+        self.assertEqual(len(response.data), 3)

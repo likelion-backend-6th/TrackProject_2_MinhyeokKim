@@ -1,7 +1,7 @@
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import viewsets, status, permissions, views
-from rest_framework.exceptions import NotFound
+from rest_framework import viewsets, status, views
+from rest_framework.exceptions import PermissionDenied
 
 from PostListAPI.models import Post, Follow
 from django.contrib.auth.models import User
@@ -26,7 +26,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def check_authentication(self, request):
         if request.user != self.get_object().user:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+            raise PermissionDenied("You do not have permission to perform this action.")
 
     def get_queryset(self):
         mine = self.request.query_params.get("mine", None)
@@ -58,7 +58,7 @@ class FollowView(views.APIView):
 
         if serializer.is_valid():
             following = serializer.validated_data["following"]
-            qs = Follow.objects.filter(user=request.user, following=following)
+            qs = Follow.objects.filter(follower=request.user, following=following)
 
             if qs.exists():  # delete if it already exists.
                 qs.delete()
