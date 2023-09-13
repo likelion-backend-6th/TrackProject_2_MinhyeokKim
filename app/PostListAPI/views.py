@@ -1,6 +1,6 @@
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, views
 from rest_framework.exceptions import NotFound
 
 from PostListAPI.models import Post, Follow
@@ -12,12 +12,11 @@ from PostListAPI.serializers import PostSerializer, FollowSerializer, UserSerial
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
 
-    def list(self, request):
-        users = User.objects.exclude(id=request.user.id).order_by("id")
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        if self.action == "list":
+            return User.objects.exclude(id=self.request.user.id)
+        return super().get_queryset()
 
 
 # Post CRUD
@@ -48,79 +47,34 @@ class PostViewSet(viewsets.ModelViewSet):
 
 
 # Follow CRUD
-class FollowViewSet(viewsets.ModelViewSet):
-    queryset = Follow.objects.all()
-    serializer_class = FollowSerializer
-    permission_classes = [permissions.AllowAny]
+class FollowView(views.APIView):
+    def post(self, request, format=None):
+        serializer = FollowSerializer(data=request.data)
 
-    @action(detail=True, methods=["GET"], url_name="follows", url_path="follows")
-    def follows(self, request, pk=None):
-        user = User.objects.get(pk=pk)
+        if serializer.is_valid():
+            following = serializer.validated_data["following"]
+            qs = Follow.objects.filter(user=request.user, following=following)
 
-        followers = Follow.objects.filter(following=user)
-        followings = Follow.objects.filter(follower=user)
-        follower_serializer = FollowSerializer(followers, many=True)
-        following_serializer = FollowSerializer(followings, many=True)
+            if qs.exists():  # delete if it already exists.
+                qs.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            else:  # follow if it does not
+                Follow.objects.create(
+                    follower=request.user,
+                    following=following,
+                )
+                return Response(status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(
-            {
-                "current user": user.username,
-                "follower": follower_serializer.data,
-                "following": following_serializer.data,
-            }
+
+class FeedView(views.APIView):
+    def get(self, request, format=None):
+        user = request.user
+        following_ids = Follow.objects.filter(follower=user).values_list(
+            "following", flat=True
         )
 
-    @action(
-        detail=False, methods=["POST"], url_name="add_follow", url_path="add_follow"
-    )
-    def add_follow(self, request):
-        follower = request.user
-        following_id = request.data.get("following_id")
-        following = User.objects.get(pk=following_id)
-
-        if Follow.objects.filter(follower=follower, following=following).exists():
-            return Response(
-                status=status.HTTP_409_CONFLICT,
-                data="Already following",
-            )
-        result = f"{follower} follows {following}"
-        Follow.objects.create(follower=follower, following=following)
-        return Response(
-            status=status.HTTP_201_CREATED,
-            data=result,
-        )
-
-    @action(
-        detail=False,
-        methods=["DELETE"],
-        url_name="unfollow",
-        url_path="unfollow/(?P<following_id>[^/.]+)",
-    )
-    def unfollow(self, request, pk=None, following_id=None):
-        follower = request.user
-
-        if following_id is None:
-            return Response(
-                status=status.HTTP_400_BAD_REQUEST,
-                data="Missing following_id",
-            )
-
-        try:
-            following = User.objects.get(pk=following_id)
-        except User.DoesNotExist:
-            return Response(
-                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        if Follow.objects.filter(follower=follower, following=following).exists():
-            result = f"{follower} unfollows {following}"
-            Follow.objects.filter(follower=follower, following=following).delete()
-            return Response(
-                status=status.HTTP_200_OK,
-                data=result,
-            )
-
-        return Response(
-            status=status.HTTP_404_NOT_FOUND,
-            data="Follow not found",
-        )
+        posts = Post.objects.filter(user__in=following_ids)
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data)
