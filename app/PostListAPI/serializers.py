@@ -16,11 +16,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
+    username = serializers.ReadOnlyField(source="user.username")
+
     class Meta:
         model = Post
         fields = (
             "id",
             "user",
+            "username",
             "content",
             "created_date",
             "updated_date",

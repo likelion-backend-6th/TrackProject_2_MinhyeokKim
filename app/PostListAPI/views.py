@@ -29,9 +29,14 @@ class PostViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
     def get_queryset(self):
-        if self.action == "list":
-            return Post.objects.filter(user=self.request.user)
-        return super().get_queryset()
+        mine = self.request.query_params.get("mine", None)
+
+        if mine:
+            return Post.objects.filter(user_id=self.request.user.id).order_by(
+                "-created_date"
+            )
+        else:
+            return Post.objects.all().order_by("-created_date")
 
     def update(self, request, *args, **kwargs):
         self.check_authentication(request)
