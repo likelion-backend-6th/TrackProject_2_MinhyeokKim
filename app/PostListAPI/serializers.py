@@ -6,7 +6,11 @@ from django.contrib.auth.models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = "__all__"
+        fields = (
+            "id",
+            "username",
+            "password",
+        )
 
         extra_kwargs = {"password": {"write_only": True}}
 
@@ -14,11 +18,10 @@ class UserSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = "__all__"
-
-        read_only_fields = (
+        fields = (
             "id",
-            "author",
+            "user",
+            "content",
             "created_at",
             "updated_at",
         )
@@ -27,6 +30,9 @@ class PostSerializer(serializers.ModelSerializer):
 class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
-        fields = "__all__"
+        fields = ("follower", "following")
 
-        read_only_fields = ("id",)
+        read_only_fields = ("follower",)
+
+    def unfollow(self, follower, following):
+        return Follow.objects.filter(follower=follower, following=following).delete()
