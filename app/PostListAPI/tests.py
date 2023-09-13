@@ -104,6 +104,7 @@ class PostFollowTestCase(APITestCase):
         self.client.force_authenticate(user=random_user)
         url = reverse("follow")
 
+        # follow
         response = self.client.post(url, {"following": stranger.id})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(
@@ -111,7 +112,7 @@ class PostFollowTestCase(APITestCase):
         )
 
         # unfollow
-        response = self.client.delete(url, {"following": stranger.id})
+        response = self.client.post(url, {"following": stranger.id})
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(
             Follow.objects.filter(follower=random_user, following=stranger).exists()
