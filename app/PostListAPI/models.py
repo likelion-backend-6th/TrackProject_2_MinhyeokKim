@@ -7,7 +7,7 @@ class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     created_date = models.DateTimeField(auto_now_add=True)
-    update_date = models.DateTimeField(auto_now=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
