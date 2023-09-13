@@ -1,6 +1,4 @@
 terraform {
-  # backend "pg" {}
-
   required_providers {
     ncloud = {
       source = "NaverCloudPlatform/ncloud"
@@ -138,7 +136,7 @@ data "ncloud_server_products" "sm" {
   output_file = "product.json"
 }
 
-# public_ip 를 
+# public_ip 를 밖에서 받아서 생성 -> 고정효과
 resource "ncloud_public_ip" "be" {
   server_instance_no = module.be.instance_no
 }
