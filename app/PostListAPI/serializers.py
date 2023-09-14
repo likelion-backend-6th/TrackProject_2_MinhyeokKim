@@ -4,15 +4,22 @@ from django.contrib.auth.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    is_following = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = (
             "id",
             "username",
             "password",
+            "is_following",
         )
 
         extra_kwargs = {"password": {"write_only": True}}
+
+    def get_is_following(self, obj):
+        request_user = self.context["request"].user
+        return Follow.objects.filter(follower=request_user, following=obj).exists()
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -25,6 +32,7 @@ class PostSerializer(serializers.ModelSerializer):
             "user",
             "username",
             "content",
+            "is_hidden",
             "created_date",
             "updated_date",
         )

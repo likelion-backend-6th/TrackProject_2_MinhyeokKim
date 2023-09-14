@@ -29,14 +29,22 @@ class PostViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("You do not have permission to perform this action.")
 
     def get_queryset(self):
+        # post/?mine=true
         mine = self.request.query_params.get("mine", None)
+        # post/?mine=true&only_hidden=true
+        only_hidden = self.request.query_params.get("only_hidden", None)
 
         if mine:
-            return Post.objects.filter(user_id=self.request.user.id).order_by(
-                "-created_date"
-            )
+            if only_hidden:
+                return Post.objects.filter(
+                    user_id=self.request.user.id, is_hidden=True
+                ).order_by("-created_date")
+            else:
+                return Post.objects.filter(user_id=self.request.user.id).order_by(
+                    "-created_date"
+                )
         else:
-            return Post.objects.all().order_by("-created_date")
+            return Post.objects.filter(is_hidden=False).order_by("-created_date")
 
     def update(self, request, *args, **kwargs):
         self.check_authentication(request)
@@ -49,6 +57,10 @@ class PostViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         self.check_authentication(request)
         return super().destroy(request, *args, **kwargs)
+
+    def toggle_hidden(self, request, pk=None):
+        self.check_authentication(request)
+        post = self.get_object()
 
 
 # Follow CRUD
