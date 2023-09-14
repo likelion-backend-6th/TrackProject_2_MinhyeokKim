@@ -26,11 +26,15 @@ python manage.py create_dummy_data
 
 - 유저
   - [x] 사용자 본인을 제외한 전체 사용자 목록을 확인할 수 있다.
+  - [ ] 전체 유저 목록을 불러올 때, 사용자가 해당 유저를 follow하고 있는지 여부를 알 수 있다.
 - 게시글
   - [x] 사용자는 모든 게시글을 볼 수 있다.
   - [x] 사용자는 게시글을 올릴 수 있다.
   - [x] 사용자는 본인의 게시물을 모아볼 수 있다.
   - [x] 사용자는 본인의 게시물을 수정하거나, 삭제할 수 있다.
+  - [ ] 사용자는 본인의 게시물을 숨김(숨김해제)처리할 수 있다.
+  - [ ] 숨김처리된 게시물은 사용자 본인만 볼 수 있고, 다른 사용자는 볼 수 없다.
+  - [ ] 게시물에 사진을 추가할 수 있다.
 - follow
   - [x] 사용자는 다른 사용자를 follow(unfollow)할 수 있다.
   - [x] 사용자는 follow한 사람들 목록을 확인할 수 있다.
@@ -60,9 +64,24 @@ python manage.py create_dummy_data
 - [x] Github actions로 구현
 - [x] push가 됐을 때, 테스트 코드를 실행하여, 테스트가 정상 작동하는지 확인하고, 정상 작동하면, 서버에 새 버전을 배포
 
-### 백엔드 서버 분리
+### 7. terraform 작성
+
+- [ ] 배포 및 운영에 필요한 모든 인프라를 terraform으로 관리한다.
+
+### 8. multi-stage 구성
+
+- [ ] production과 staging 환경을 별도로 구성한다.
+- [ ] terraform 으로 손쉽게 각 환경을 구성(apply)하고, 폐기(destroy)할 수 있다.
+
+### 9. k8s로 배포
+
+- [ ] 서비스를 k8s로 배포한다.
+
+### 10. 백엔드 서버 분리
 
 - [x] 백엔드 서버와 DB 서버를 물리적으로 분리
+
+# Challenging
 
 ### 도커 컨테이너로 배포
 
@@ -76,6 +95,18 @@ python manage.py create_dummy_data
 ### CICD Pipeline 작성
 
 - [x] PR이 있을 때, 테스트 코드를 실행하여, 테스트가 정상 작동하는지 확인
+
+### monitoring 시스템 구축
+
+- 500에러 혹은 scale up/down이 일어날 때, 알람을 보낸다.
+
+### terraform modulizing
+
+- terraform코드를 모듈화하여 재사용 가능하게 만든다.
+
+### K8s CICD 구축
+
+- k8s CICD 파이프라인을 구축한다.
 
 ### 주요 설치 패키지/모듈
 
