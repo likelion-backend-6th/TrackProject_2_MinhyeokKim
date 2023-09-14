@@ -5,6 +5,7 @@ from rest_framework.exceptions import PermissionDenied
 
 from PostListAPI.models import Post, Follow
 from django.contrib.auth.models import User
+from django.db.models import Case, When, Value, BooleanField
 from PostListAPI.serializers import PostSerializer, FollowSerializer, UserSerializer
 
 
@@ -13,9 +14,32 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+    # update context to find out who's following data must be returned
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
     def get_queryset(self):
         if self.action == "list":
-            return User.objects.exclude(id=self.request.user.id)
+            # get following ids
+            following_ids = Follow.objects.filter(
+                follower=self.request.user
+            ).values_list("following", flat=True)
+
+            # folloing users at the top of the list
+            user_queryset = (
+                User.objects.exclude(id=self.request.user.id)
+                .annotate(
+                    is_following=Case(
+                        When(id__in=following_ids, then=Value(True)),
+                        default=Value(False),
+                        output_field=BooleanField(),
+                    )
+                )
+                .order_by("-is_following", "id")
+            )
+            return user_queryset
         return super().get_queryset()
 
 

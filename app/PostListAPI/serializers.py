@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    # define a new field
     is_following = serializers.SerializerMethodField()
 
     class Meta:
@@ -17,6 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
 
         extra_kwargs = {"password": {"write_only": True}}
 
+    # get_<field_name>()
     def get_is_following(self, obj):
         request_user = self.context["request"].user
         return Follow.objects.filter(follower=request_user, following=obj).exists()
