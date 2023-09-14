@@ -30,4 +30,13 @@ done
 # >&2 -> 표준에러를 결과물에 넣겠다
 >&2 echo "PostgreSQL is available"
 
+python manage.py migrate
+
+if [ "$(python manage.py check_db_is_empty)" == "empty" ]; then
+    python manage.py your_dummy_data_command
+    echo "dummy data has been created"
+else
+    echo "Data already exists, no need to create dummy data"
+fi
+
 exec "$@"
