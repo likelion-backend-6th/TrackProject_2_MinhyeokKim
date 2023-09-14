@@ -1,6 +1,6 @@
-# TrackProject_1_MinhyeokKim
+# TrackProject_MinhyeokKim
 
-Start up
+## Start up
 
 ```bash
 git clone https://github.com/likelion-backend-6th/TrackProject_1_MinhyeokKim.git sns_app
@@ -17,10 +17,39 @@ Dummy data creation at first
 python manage.py create_dummy_data
 ```
 
+## Project Concept
+
+- "트위터" 와 같은 소셜 네트워크 서비스 애플리케이션 개발
+- 백엔드 API: Django REST Framework
+- CICD: Github actions
+- Cloud: Naver Cloud Platform
+- Terraform 을 이용하여 IaC 구현
+- k8s 로 오케스트레이션 구현
+
+## Development Checklist
+
 ### 1. 백엔드 DB 설계
 
 - [x] Post
 - [x] Follow
+
+#### DB modeling
+
+##### Post
+
+| Model | Field Name   | Data Type     | Description   | Relationship                            |
+| ----- | ------------ | ------------- | ------------- | --------------------------------------- |
+| Post  | user         | ForeignKey    | Post creator  | Linked to User model, CASCADE on delete |
+| Post  | content      | TextField     | Post content  | None                                    |
+| Post  | created_date | DateTimeField | Creation date | Automatically set                       |
+| Post  | updated_date | DateTimeField | Update date   | Automatically set                       |
+
+##### Follow
+
+| Model  | Field Name | Data Type  | Description | Relationship                            |
+| ------ | ---------- | ---------- | ----------- | --------------------------------------- |
+| Follow | follower   | ForeignKey | Follower    | Linked to User model, CASCADE on delete |
+| Follow | following  | ForeignKey | Following   | Linked to User model, CASCADE on delete |
 
 ### 2. 백엔드 API 개발
 
@@ -81,7 +110,7 @@ python manage.py create_dummy_data
 
 - [x] 백엔드 서버와 DB 서버를 물리적으로 분리
 
-# Challenging
+## Challenging Task
 
 ### 도커 컨테이너로 배포
 
@@ -98,15 +127,15 @@ python manage.py create_dummy_data
 
 ### monitoring 시스템 구축
 
-- 500에러 혹은 scale up/down이 일어날 때, 알람을 보낸다.
+- [ ] 500에러 혹은 scale up/down이 일어날 때, 알람을 보낸다.
 
 ### terraform modulizing
 
-- terraform코드를 모듈화하여 재사용 가능하게 만든다.
+- [ ] terraform 코드를 모듈화하여 재사용 가능하게 만든다.
 
 ### K8s CICD 구축
 
-- k8s CICD 파이프라인을 구축한다.
+- [ ] k8s CICD 파이프라인을 구축한다.
 
 ### 주요 설치 패키지/모듈
 
