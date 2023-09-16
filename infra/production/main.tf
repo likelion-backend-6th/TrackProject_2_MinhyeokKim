@@ -69,10 +69,10 @@ module "be" {
     IMAGE_TAG              = var.IMAGE_TAG
     db                     = local.db
     db_port                = local.db_port
-    db_host                = ncloud_public_ip.db
+    db_host                = ncloud_public_ip.db.public_ip
     db_user                = var.db_user
     db_password            = var.db_password
-    DJANGO_SECRET_KEY      = var.DJANGO_SETTINGS_MODULE
+    DJANGO_SETTINGS_MODULE = var.DJANGO_SETTINGS_MODULE
     DJANGO_SECRET_KEY      = var.DJANGO_SECRET_KEY
   }
 
