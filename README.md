@@ -97,11 +97,11 @@ python manage.py create_dummy_data
 
 ### 7. terraform 작성
 
-- [ ] 배포 및 운영에 필요한 모든 인프라를 terraform으로 관리한다.
+- [x] 배포 및 운영에 필요한 모든 인프라를 terraform으로 관리한다.
 
 ### 8. multi-stage 구성
 
-- [ ] production과 staging 환경을 별도로 구성한다.
+- [x] production과 staging 환경을 별도로 구성한다.
 - [ ] terraform 으로 손쉽게 각 환경을 구성(apply)하고, 폐기(destroy)할 수 있다.
 
 ### 9. k8s로 배포
