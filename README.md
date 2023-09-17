@@ -65,7 +65,7 @@ python manage.py create_dummy_data
   - [x] 사용자는 본인의 게시물을 수정하거나, 삭제할 수 있다.
   - [x] 사용자는 본인의 게시물을 숨김(숨김해제)처리할 수 있다.
   - [x] 숨김처리된 게시물은 사용자 본인만 볼 수 있고, 다른 사용자는 볼 수 없다.
-  - [ ] 게시물에 사진을 추가할 수 있다.
+  - [x] 게시물에 사진을 추가할 수 있다.
 - follow
   - [x] 사용자는 다른 사용자를 follow(unfollow)할 수 있다.
   - [x] 사용자는 follow한 사람들 목록을 확인할 수 있다.
@@ -102,7 +102,7 @@ python manage.py create_dummy_data
 ### 8. multi-stage 구성
 
 - [x] production과 staging 환경을 별도로 구성한다.
-- [ ] terraform 으로 손쉽게 각 환경을 구성(apply)하고, 폐기(destroy)할 수 있다.
+- [x] terraform 으로 손쉽게 각 환경을 구성(apply)하고, 폐기(destroy)할 수 있다.
 
 ### 9. k8s로 배포
 
@@ -135,7 +135,7 @@ python manage.py create_dummy_data
 
 ### terraform modulizing
 
-- [ ] terraform 코드를 모듈화하여 재사용 가능하게 만든다.
+- [x] terraform 코드를 모듈화하여 재사용 가능하게 만든다.
 
 ### K8s CICD 구축
 
