@@ -6,12 +6,13 @@ from django.contrib.auth.models import User
 class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
+    image_url = models.URLField(null=True, blank=True)
     is_hidden = models.BooleanField(default=False)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.title
+        return self.content
 
 
 class Follow(models.Model):
