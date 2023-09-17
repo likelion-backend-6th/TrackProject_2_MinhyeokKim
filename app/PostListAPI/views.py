@@ -132,10 +132,10 @@ class PostViewSet(viewsets.ModelViewSet):
         # serializer = PostSerializer(data=request.data)
 
         if serializer.is_valid():  # if so,
-            data = serializer.validated_data
-            data["user"] = request.user
+            data = serializer.validated_data  # this data dont have user info
+            data["user"] = request.user  # so user data has been added from here
             data["image_url"] = image_url if request.data.get("image") else None
-            response: Post = serializer.create(data)  # save to DB
+            response: Post = serializer.create(data)  # save to DB with image_url field
             return Response(
                 data=PostSerializer(response).data, status=status.HTTP_201_CREATED
             )

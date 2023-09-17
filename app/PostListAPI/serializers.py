@@ -32,10 +32,10 @@ class PostSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = (
             "id",
-            "created_date",
-            "updated_date",
             "user",
             "username",
+            "created_date",
+            "updated_date",
         )
 
 
