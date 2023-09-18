@@ -29,7 +29,7 @@ python manage.py create_dummy_data
 
 ---
 
-## Development Checklist
+## Development Checklist (requirements)
 
 ### 1. 백엔드 DB 설계
 
@@ -145,14 +145,15 @@ python manage.py create_dummy_data
 
 ## 주요 설치 패키지/모듈
 
-|          이름           |  버전  |
-| :---------------------: | :----: |
-|       **python**        | 3.11.4 |
-|       **Django**        | 4.2.5  |
-|     **PostgreSQL**      |   13   |
-|  **PostgreSQL local**   |   15   |
-|      **gunicorn**       | 21.2.0 |
-|   **psycopg2-binary**   | 2.9.7  |
-| **djangorestframework** | 3.14.0 |
-|     **django-seed**     | 0.3.1  |
-|   **drf-spectacular**   | 0.26.4 |
+|          이름           |  버전   |
+| :---------------------: | :-----: |
+|       **python**        | 3.11.4  |
+|       **Django**        |  4.2.5  |
+|     **PostgreSQL**      |   13    |
+|  **PostgreSQL local**   |   15    |
+|      **gunicorn**       | 21.2.0  |
+|   **psycopg2-binary**   |  2.9.7  |
+| **djangorestframework** | 3.14.0  |
+|     **django-seed**     |  0.3.1  |
+|   **drf-spectacular**   | 0.26.4  |
+|        **boto3**        | 1.28.49 |
