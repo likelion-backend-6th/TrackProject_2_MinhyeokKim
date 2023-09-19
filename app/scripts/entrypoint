@@ -33,7 +33,7 @@ done
 python manage.py migrate
 
 if [ "$(python manage.py check_db_is_empty)" == "empty" ]; then
-    python manage.py your_dummy_data_command
+    python manage.py create_dummy_data
     echo "dummy data has been created"
 else
     echo "Data already exists, no need to create dummy data"

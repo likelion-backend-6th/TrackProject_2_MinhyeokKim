@@ -20,4 +20,3 @@ services:
       - ./.envs/local/.postgres
     ports:
       - "15432:5432"
-      
