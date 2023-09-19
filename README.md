@@ -106,7 +106,7 @@ python manage.py create_dummy_data
 
 ### 9. k8s로 배포
 
-- [ ] 서비스를 k8s로 배포한다.
+- [x] 서비스를 k8s로 배포한다.
 
 ### 10. 백엔드 서버 분리
 
@@ -139,7 +139,7 @@ python manage.py create_dummy_data
 
 ### K8s CICD 구축
 
-- [ ] k8s CICD 파이프라인을 구축한다.
+- [x] k8s CICD 파이프라인을 구축한다.
 
 ---
 
