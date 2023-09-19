@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sns.db.fullname" . }}
+  labels:
+    {{- include "sns.db.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.dbService.type }}
+  ports:
+    - port: {{ .Values.dbService.port }}
+      targetPort: {{ .Values.dbService.port }} 
+      protocol: TCP
+  selector:
+    {{- include "sns.db.selectorLabels" . | nindent 4 }}
