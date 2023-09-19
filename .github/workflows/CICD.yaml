@@ -59,41 +59,69 @@ jobs:
           username: ${{ secrets.NCP_ACCESS_KEY }}
           password: ${{ secrets.NCP_SECRET_KEY }}
 
-      - name: Get current timestamp
-        id: timestamp
-        run: echo "timestamp=$(date '+%s')" >> "$GITHUB_OUTPUT"
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: false
+          # fix: - patch, feat: - minor, BREAKING CHANGE: - major
+
+      - name: Check if new_tag exists
+        id: check_tag
+        run: |
+          echo "NEW_TAG_EXISTS=${{ steps.tag_version.outputs.new_tag != '' }}" >> $GITHUB_ENV
+
+      - name: Create a GitHub release
+        if: env.NEW_TAG_EXISTS == 'true'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+
+      - name: create TAG
+        id: created_tag
+        run: |
+          if [[ "${{ steps.tag_version.outputs.new_tag }}" != "" ]]; then
+              echo "Using version tag: ${{ steps.tag_version.outputs.new_tag }}"
+              echo "TAG=${{ steps.tag_version.outputs.new_tag }}" >> $GITHUB_ENV
+          else
+              TIMESTAMP=$(date '+%s')
+              echo "Using timestamp tag: $TIMESTAMP"
+              echo "TAG=$TIMESTAMP" >> $GITHUB_ENV
+          fi
 
       - name: Build and Push
         uses: docker/build-push-action@v4
         with:
-          context: app # location where image will be built
-          push: true # This indicates push event
-          tags: ${{ env.IMAGE_TAG }},"${{ env.IMAGE }}:${{ steps.timestamp.outputs.timestamp }}"
+          context: lion_app
+          push: true
+          tags: ${{ env.IMAGE_TAG }},"${{ env.IMAGE }}:${{ env.TAG }}"
           platforms: linux/amd64,linux/arm64
 
-  deploy-staging:
+  deploy:
     needs: build_push_to_ncp
-    name: deploy to staging
+    name: deploy new version
     runs-on: ubuntu-latest
     steps:
-      - name: git pull via SSH
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          script: | # while actions is running, please use options !
-            cd sns_app
-            echo "${{ secrets.NCP_SECRET_KEY }}" | dockers login ${{ vars.NCP_CONTAINER_REGISTRY }} \
-            --username ${{ secrets.NCP_ACCESS_KEY }} \
-            --password ${{ secrets.NCP_SECRET_KEY }}
-            docker pull ${{ env.IMAGE_TAG }}
-            docker stop sns-app && docker rm sns-app
-            docker run -p 8000:8000 -d \
-            --env-file .env \
-            --name sns-app \
-            ${{ env.IMAGE_TAG }} \
-            /start
+          ref: main
 
-      - name: echo IMAGE_TAG
-        run: echo $IMAGE_TAG
+      - name: Update appVersion in Chart.yaml
+        run: |
+          echo "Using version tag: ${{ env.TAG }}"
+          sed -ie 's/appVersion: ".*"/appVersion: "'${{ github.event.release.tag_name }}'"/g' sns-helm-chart/Chart.yaml
+
+      - name: Commit files
+        run: |
+          git config --local user.email "xormrdlsrks2@gmail.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -a -m "update tag"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: main
