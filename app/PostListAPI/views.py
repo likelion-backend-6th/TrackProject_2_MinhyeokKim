@@ -69,10 +69,6 @@ class PostViewSet(viewsets.ModelViewSet):
         if request.user != self.get_object().user:
             raise PermissionDenied("You do not have permission to perform this action.")
 
-    @extend_schema(deprecated=True)
-    def list(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_400_BAD_REQUEST, data="Deprecated API")
-
     def image_handler(self, request: Request, existing_post=None):
         image_url = existing_post.image_url if existing_post else None
 
