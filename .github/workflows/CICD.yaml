@@ -96,7 +96,7 @@ jobs:
       - name: Build and Push
         uses: docker/build-push-action@v4
         with:
-          context: lion_app
+          context: app
           push: true
           tags: ${{ env.IMAGE_TAG }},"${{ env.IMAGE }}:${{ env.TAG }}"
           platforms: linux/amd64,linux/arm64
