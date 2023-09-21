@@ -157,3 +157,11 @@ python manage.py create_dummy_data
 |     **django-seed**     |  0.3.1  |
 |   **drf-spectacular**   | 0.26.4  |
 |        **boto3**        | 1.28.49 |
+
+---
+
+## Image refs
+
+<img src="./images/argocd.png" width="500" height="300">
+
+<img src="./images/website-lb.png" width="500" height="300">
