@@ -1,4 +1,4 @@
-name: CI
+name: CICD
 
 on:
   # pull_request:
@@ -64,7 +64,7 @@ jobs:
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.1
         with:
-          github_token: ${{ secrets.sns_app }}
+          github_token: ${{ secrets.SNS_APP }}
           default_bump: false
           # fix: - patch, feat: - minor, BREAKING CHANGE: - major
 
