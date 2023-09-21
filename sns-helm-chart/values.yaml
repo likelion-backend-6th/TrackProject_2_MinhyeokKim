@@ -1,7 +1,7 @@
 image: 
   repository: likelion-cr-mh.kr.ncr.ntruss.com/sns-app
   tag: 0.1.0
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 imagePullSecrets:
   - name: regcred
