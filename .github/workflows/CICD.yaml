@@ -103,7 +103,7 @@ jobs:
 
   deploy:
     if: ${{ needs.build_push_to_ncp.outputs.NEW_TAG_EXISTS == 'true' }}
-    # needs: build_push_to_ncp
+    needs: build_push_to_ncp
     name: deploy new version
     runs-on: ubuntu-latest
     steps:
