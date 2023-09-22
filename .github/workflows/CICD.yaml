@@ -113,29 +113,32 @@ jobs:
     steps:
       - env:
           NEW_TAG: ${{ needs.build_push_to_ncp.outputs.NEW_TAG }}
-        run: echo "$NEW_TAG"
+        run: |
+          echo "$NEW_TAG"
+          echo "TAG=${{ env.NEW_TAG }}" >> $GITHUB_ENV
 
       - name: Checkout code
+        if: ${{ env.TAG != '' }}
         uses: actions/checkout@v3
         with:
           ref: main
           token: ${{ secrets.IVAN_SNS }}
 
       - name: Update appVersion in Chart.yaml
-        if: ${{ env.NEW_TAG != '' }}
+        if: ${{ env.TAG != '' }}
         run: |
-          echo "Using version tag: ${{ env.NEW_TAG }}"
-          sed -ie 's/appVersion: ".*"/appVersion: "'${{ env.NEW_TAG }}'"/g' sns-helm-chart/Chart.yaml
+          echo "Using version tag: ${{ env.TAG }}"
+          sed -ie 's/appVersion: ".*"/appVersion: "'${{ env.TAG }}'"/g' sns-helm-chart/Chart.yaml
 
       - name: Commit files
-        if: ${{ env.NEW_TAG != '' }}
+        if: ${{ env.TAG != '' }}
         run: |
           git config --local user.email "xormrdlsrks2@gmail.com"
           git config --local user.name "github-actions[bot]"
           git commit -a -m "update tag"
 
       - name: Push changes
-        if: ${{ env.NEW_TAG != '' }}
+        if: ${{ env.TAG != '' }}
         uses: ad-m/github-push-action@master
         with:
           branch: main
