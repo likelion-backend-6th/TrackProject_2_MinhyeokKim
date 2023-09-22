@@ -3,8 +3,7 @@ name: CD using Docker Image
 on:
   workflow_dispatch:
   release:
-    types:
-      - published
+    types: [published]
 
 env:
   IMAGE: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app
