@@ -74,7 +74,7 @@ jobs:
           echo "NEW_TAG_EXISTS=${{ steps.tag_version.outputs.new_tag != '' }}" >> $GITHUB_ENV
 
       - name: Create a GitHub release
-        if: env.NEW_TAG_EXISTS == 'true'
+        if: ${{ env.NEW_TAG_EXISTS == 'true' }}
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
@@ -102,7 +102,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
 
   deploy:
-    needs: build_push_to_ncp
+    if: ${{ needs.build_push_to_ncp.outputs.NEW_TAG_EXISTS == 'true' }}
+    # needs: build_push_to_ncp
     name: deploy new version
     runs-on: ubuntu-latest
     steps:
