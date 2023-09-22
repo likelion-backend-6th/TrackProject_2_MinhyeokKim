@@ -69,6 +69,7 @@ jobs:
           github_token: ${{ secrets.IVAN_SNS }}
           default_bump: false
           # fix: - patch, feat: - minor, BREAKING CHANGE: - major
+          # echo "NEW_TAG_EXISTS=${{ steps.check_tag.outputs.NEW_TAG_EXISTS }}" >> $GITHUB_OUTPUT
 
       - name: Check if new_tag exists
         id: check_tag
