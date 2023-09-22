@@ -155,6 +155,7 @@ class PostViewSet(viewsets.ModelViewSet):
         post = self.get_object()
         post.is_hidden = not post.is_hidden
         post.save()
+        return Response(status=status.HTTP_200_OK)
 
 
 # Follow CRUD
