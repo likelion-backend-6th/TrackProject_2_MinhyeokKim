@@ -21,17 +21,20 @@ jobs:
           echo "TAG=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
 
       - name: Checkout code
+        if: ${{ env.TAG != '' }}
         uses: actions/checkout@v3
         with:
           ref: main
           token: ${{ secrets.IVAN_SNS }}
 
       - name: Update appVersion in Chart.yaml
+        if: ${{ env.TAG != '' }}
         run: |
           echo "Using version tag: ${{ env.TAG }}"
           sed -ie 's/appVersion: ".*"/appVersion: "'${{ env.TAG }}'"/g' sns-helm-chart/Chart.yaml
 
       - name: Commit files
+        if: ${{ env.TAG != '' }}
         run: |
           echo "Using version tag while commiting: ${{ env.TAG }}"
           git config --local user.email "xormrdlsrks2@gmail.com"
@@ -39,6 +42,7 @@ jobs:
           git commit -a -m "update tag"
 
       - name: Push changes
+        if: ${{ env.TAG != '' }}
         uses: ad-m/github-push-action@master
         with:
           branch: main
