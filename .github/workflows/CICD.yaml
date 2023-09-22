@@ -33,6 +33,8 @@ jobs:
     needs: lint
     name: Build Image
     runs-on: ubuntu-latest
+    outputs:
+      NEW_TAG_EXISTS: ${{ steps.check_tag.outputs.NEW_TAG_EXISTS }}
     steps:
       # checkout to the branch and get the codes
       - name: Checkout code
