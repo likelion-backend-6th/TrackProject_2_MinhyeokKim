@@ -2,40 +2,45 @@ name: CD using Docker Image
 
 on:
   workflow_dispatch:
-  # pull_request:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - .github/workflows/CD.yaml
-  #     - SNS/**
+  release:
+    types:
+      - published
 
 env:
   IMAGE: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app
   IMAGE_TAG: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app:latest
 
 jobs:
-  deploy-staging:
-    name: deploy to staging
+  deploy:
+    name: deploy new version
     runs-on: ubuntu-latest
     steps:
-      - name: git pull via SSH
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          script: |
-            cd sns_app
-            echo "${{ secrets.NCP_SECRET_KEY }}" | dockers login ${{ vars.NCP_CONTAINER_REGISTRY }} \
-            --username ${{ secrets.NCP_ACCESS_KEY }} \
-            --password ${{ secrets.NCP_SECRET_KEY }}
-            docker pull ${{ env.IMAGE_TAG }}
-            docker stop sns-app && docker rm sns-app
-            docker run -p 8000:8000 -d \
-            --env-file .env \
-            --name sns-app \
-            ${{ env.IMAGE_TAG }} \
-            /start
+      - name: Get release version
+        id: get_version
+        run: |
+          echo "$NEW_TAG"
+          echo "TAG=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
 
-      - name: echo IMAGE_TAG
-        run: echo $IMAGE_TAG
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          token: ${{ secrets.IVAN_SNS }}
+
+      - name: Update appVersion in Chart.yaml
+        run: |
+          echo "Using version tag: ${{ env.TAG }}"
+          sed -ie 's/appVersion: ".*"/appVersion: "'${{ env.TAG }}'"/g' sns-helm-chart/Chart.yaml
+
+      - name: Commit files
+        run: |
+          echo "Using version tag while commiting: ${{ env.TAG }}"
+          git config --local user.email "xormrdlsrks2@gmail.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -a -m "update tag"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: main
+          github_token: ${{ secrets.IVAN_SNS }}
