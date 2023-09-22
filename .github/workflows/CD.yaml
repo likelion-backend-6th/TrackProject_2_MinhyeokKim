@@ -17,7 +17,7 @@ jobs:
       - name: Get release version
         id: get_version
         run: |
-          echo "$NEW_TAG"
+          echo "$NEW_TAG %TAG"
           echo "TAG=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
 
       - name: Checkout code
