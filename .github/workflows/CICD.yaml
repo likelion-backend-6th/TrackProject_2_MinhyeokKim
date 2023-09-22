@@ -113,8 +113,7 @@ jobs:
     steps:
       - env:
           NEW_TAG: ${{ needs.build_push_to_ncp.outputs.NEW_TAG }}
-        run: |
-          echo "NEW_TAG=${{ steps.check_tag.outputs.NEW_TAG }}" >> $GITHUB_ENV
+        run: echo "$NEW_TAG"
 
       - name: Checkout code
         uses: actions/checkout@v3
