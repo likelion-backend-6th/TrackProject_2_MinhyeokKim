@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  sns-app:
+    depends_on:
+      - db
+    container_name: sns-app-test
+    build:
+      context: app
+      dockerfile: Dockerfile
+    command: /start
+    env_file:
+      - ./.envs/local/.django
+      - ./.envs/local/.postgres
+
+  db:
+    container_name: db-test
+    image: postgres:15
+    env_file:
+      - ./.envs/local/.postgres
+    ports:
+      - "15432:5432"

@@ -1,0 +1,147 @@
+name: CICD
+
+on:
+  # pull_request:
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - "main"
+
+env:
+  IMAGE: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app
+  IMAGE_TAG: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app:latest
+
+jobs:
+  lint:
+    name: Check lint (black)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install black
+        run: pip install black
+
+      - name: Check black
+        run: black --check app
+
+  build_push_to_ncp:
+    needs: lint
+    name: Build Image
+    runs-on: ubuntu-latest
+    outputs:
+      NEW_TAG: ${{ steps.check_tag.outputs.NEW_TAG }}
+    steps:
+      # checkout to the branch and get the codes
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: test
+        run: |
+          docker-compose -f docker-compose.test.yaml up --build -d
+          docker-compose -f docker-compose.test.yaml run sns-app python manage.py test
+
+      - name: post-test
+        run: |
+          docker-compose -f docker-compose.test.yaml down
+
+      # buildx - support amd64, arm64
+      - name: Set up Docker buildx
+        uses: docker/setup-buildx-action@v2
+
+      # NCP Login
+      - name: Login to NCR
+        uses: docker/login-action@v2
+        with:
+          # registry: where to login
+          registry: ${{ vars.NCP_CONTAINER_REGISTRY }}
+          username: ${{ secrets.NCP_ACCESS_KEY }}
+          password: ${{ secrets.NCP_SECRET_KEY }}
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.IVAN_SNS }}
+          default_bump: false
+          # fix: - patch, feat: - minor, BREAKING CHANGE: - major
+          # echo "NEW_TAG_EXISTS=${{ steps.check_tag.outputs.NEW_TAG_EXISTS }}" >> $GITHUB_OUTPUT
+
+      - name: Check if new_tag exists
+        id: check_tag
+        run: |
+          echo "NEW_TAG_EXISTS=${{ steps.tag_version.outputs.new_tag != '' }}" >> $GITHUB_ENV
+          echo "NEW_TAG=${{ steps.tag_version.outputs.new_tag }}" >> $GITHUB_OUTPUT
+
+      - name: Create a GitHub release
+        if: ${{ env.NEW_TAG_EXISTS == 'true' }}
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.IVAN_SNS }}
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+
+      - name: create TAG
+        id: created_tag
+        run: |
+          if [[ "${{ steps.tag_version.outputs.new_tag }}" != "" ]]; then
+              echo "Using version tag: ${{ steps.tag_version.outputs.new_tag }}"
+              echo "TAG=${{ steps.tag_version.outputs.new_tag }}" >> $GITHUB_ENV
+          else
+              TIMESTAMP=$(date '+%s')
+              echo "Using timestamp tag: $TIMESTAMP"
+              echo "TAG=$TIMESTAMP" >> $GITHUB_ENV
+          fi
+
+      - name: Build and Push
+        uses: docker/build-push-action@v4
+        with:
+          context: app
+          push: true
+          tags: ${{ env.IMAGE_TAG }},"${{ env.IMAGE }}:${{ env.TAG }}"
+          platforms: linux/amd64,linux/arm64
+
+  deploy:
+    # if: ${{ needs.build_push_to_ncp.outputs.NEW_TAG_EXISTS == 'true' }}
+    needs: build_push_to_ncp
+    name: deploy new version
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          NEW_TAG: ${{ needs.build_push_to_ncp.outputs.NEW_TAG }}
+        run: |
+          echo "$NEW_TAG"
+          echo "TAG=${{ env.NEW_TAG }}" >> $GITHUB_ENV
+
+      - name: Checkout code
+        if: ${{ env.TAG != '' }}
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          token: ${{ secrets.IVAN_SNS }}
+
+      - name: Update appVersion in Chart.yaml
+        if: ${{ env.TAG != '' }}
+        run: |
+          echo "Using version tag: ${{ env.TAG }}"
+          sed -ie 's/appVersion: ".*"/appVersion: "'${{ env.TAG }}'"/g' sns-helm-chart/Chart.yaml
+
+      - name: Commit files
+        if: ${{ env.TAG != '' }}
+        run: |
+          echo "Using version tag while commiting: ${{ env.TAG }}"
+          git config --local user.email "xormrdlsrks2@gmail.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -a -m "update tag"
+
+      - name: Push changes
+        if: ${{ env.TAG != '' }}
+        uses: ad-m/github-push-action@master
+        with:
+          branch: main
+          github_token: ${{ secrets.IVAN_SNS }}

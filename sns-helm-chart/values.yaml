@@ -1,0 +1,27 @@
+image: 
+  repository: likelion-cr-mh.kr.ncr.ntruss.com/sns-app
+  tag: ""
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: regcred
+
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 2
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8000
+
+dbService:
+  type: NodePort
+  port: 5432
+
+containerPort: 8000
+
+configMap:
+  django:
+    DJANGO_SETTINGS_MODULE: "SNS.settings.staging"

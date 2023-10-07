@@ -1,0 +1,41 @@
+#!/bin/sh
+
+postgres_ready() {
+    python3 << END
+import sys
+import psycopg2
+
+try:
+    print("Connecting to database...")
+    psycopg2.connect(
+        dbname="${POSTGRES_DB}",
+        user="${POSTGRES_USER}",
+        password="${POSTGRES_PASSWORD}",
+        host="${DB_HOST}",
+        port="5432",
+    )
+except psycopg2.OperationalError:
+    sys.exit(-1)
+sys.exit(0)
+END
+}
+
+
+until postgres_ready; do # true 가 될 떄 까지 반복
+    >&2 echo "Waiting for PostgreSQL to become available..."
+    sleep 1
+done
+
+# >&2 -> 표준에러를 결과물에 넣겠다
+>&2 echo "PostgreSQL is available"
+
+python manage.py migrate
+
+if [ "$(python manage.py check_db_is_empty)" == "empty" ]; then
+    python manage.py create_dummy_data
+    echo "dummy data has been created"
+else
+    echo "Data already exists, no need to create dummy data"
+fi
+
+exec "$@"

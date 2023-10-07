@@ -1,0 +1,49 @@
+name: CD using Docker Image
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+env:
+  IMAGE: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app
+  IMAGE_TAG: ${{ vars.NCP_CONTAINER_REGISTRY }}/sns-app:latest
+
+jobs:
+  deploy:
+    name: deploy new version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get release version
+        id: get_version
+        run: |
+          echo "$NEW_TAG %TAG"
+          echo "TAG=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+
+      - name: Checkout code
+        if: ${{ env.TAG != '' }}
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          token: ${{ secrets.IVAN_SNS }}
+
+      - name: Update appVersion in Chart.yaml
+        if: ${{ env.TAG != '' }}
+        run: |
+          echo "Using version tag: ${{ env.TAG }}"
+          sed -ie 's/appVersion: ".*"/appVersion: "'${{ env.TAG }}'"/g' sns-helm-chart/Chart.yaml
+
+      - name: Commit files
+        if: ${{ env.TAG != '' }}
+        run: |
+          echo "Using version tag while commiting: ${{ env.TAG }}"
+          git config --local user.email "xormrdlsrks2@gmail.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -a -m "update tag"
+
+      - name: Push changes
+        if: ${{ env.TAG != '' }}
+        uses: ad-m/github-push-action@master
+        with:
+          branch: main
+          github_token: ${{ secrets.IVAN_SNS }}
