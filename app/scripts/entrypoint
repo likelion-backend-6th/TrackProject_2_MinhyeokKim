@@ -7,7 +7,6 @@ import psycopg2
 
 try:
     print("Connecting to database...")
-    print("${POSTGRES_DB}, ${POSTGRES_USER}, ${POSTGRES_PASSWORD}, ${DB_HOST}")
     psycopg2.connect(
         dbname="${POSTGRES_DB}",
         user="${POSTGRES_USER}",
